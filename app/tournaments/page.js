@@ -142,7 +142,7 @@ export default function TournamentsPage() {
                   >
                     {/* Tournament Image */}
                     {tournament.image_url ? (
-                      <div className="relative h-56 overflow-hidden">
+                      <div className="relative h-80 overflow-hidden">
                         <img 
                           src={tournament.image_url} 
                           alt={tournament.name}
@@ -154,7 +154,7 @@ export default function TournamentsPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="relative h-56 bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 flex items-center justify-center">
+                      <div className="relative h-80 bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 flex items-center justify-center">
                         <Gamepad2 className="w-20 h-20 text-white/20" />
                         <div className="absolute top-4 right-4">
                           {getStatusBadge(tournament.status)}

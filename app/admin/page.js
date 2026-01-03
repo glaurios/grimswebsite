@@ -7,6 +7,7 @@ import Footer from '@/components/Footer'
 import { Trophy, Plus, Save, LogOut, AlertCircle, CheckCircle, Calendar, Image as ImageIcon, Upload, X, Edit2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
+
 export default function AdminPage() {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -38,8 +39,20 @@ export default function AdminPage() {
   const [playerPoints, setPlayerPoints] = useState('')
   
   // Tournament editing state
-  const [editingTournament, setEditingTournament] = useState(null)
+ const [editingTournament, setEditingTournament] = useState(null);
   const [tournamentStatus, setTournamentStatus] = useState('')
+  
+  // Tournament full edit state
+  const [editingTournamentFull, setEditingTournamentFull] = useState(null)
+  const [editTournamentData, setEditTournamentData] = useState({
+    name: '',
+    mode: '',
+    start_time: '',
+    image_url: '',
+    status: 'upcoming'
+  })
+  const [editSelectedFile, setEditSelectedFile] = useState(null)
+  const [editImagePreview, setEditImagePreview] = useState('')
 
   // Auth
   const [email, setEmail] = useState('')
@@ -397,6 +410,109 @@ export default function AdminPage() {
     }
   }
 
+  const handleEditTournamentFull = (tournament) => {
+    setEditingTournamentFull(tournament.id)
+    setEditTournamentData({
+      name: tournament.name,
+      mode: tournament.mode,
+      start_time: new Date(tournament.start_time).toISOString().slice(0, 16),
+      image_url: tournament.image_url || '',
+      status: tournament.status
+    })
+    setEditImagePreview(tournament.image_url || '')
+  }
+
+  const handleEditFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setStatus('error')
+        setMessage('Please select an image file')
+        return
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setStatus('error')
+        setMessage('Image size must be less than 5MB')
+        return
+      }
+
+      setEditSelectedFile(file)
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setEditImagePreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+      setEditTournamentData({...editTournamentData, image_url: ''})
+    }
+  }
+
+  const clearEditImage = () => {
+    setEditSelectedFile(null)
+    setEditImagePreview('')
+    setEditTournamentData({...editTournamentData, image_url: ''})
+  }
+
+  const handleSaveTournamentFull = async (tournamentId) => {
+    try {
+      setStatus('submitting')
+      let finalImageUrl = editTournamentData.image_url
+
+      // Upload new image if selected
+      if (editSelectedFile) {
+        setUploadingImage(true)
+        const fileExt = editSelectedFile.name.split('.').pop()
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+        const { error: uploadError, data } = await supabase.storage
+          .from('tournament images')
+          .upload(fileName, editSelectedFile)
+
+        if (uploadError) {
+          throw new Error('Failed to upload image: ' + uploadError.message)
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('tournament images')
+          .getPublicUrl(fileName)
+
+        finalImageUrl = publicUrl
+        setUploadingImage(false)
+      }
+
+      const { error } = await supabase
+        .from('tournaments')
+        .update({
+          name: editTournamentData.name,
+          mode: editTournamentData.mode,
+          start_time: new Date(editTournamentData.start_time).toISOString(),
+          image_url: finalImageUrl || null,
+          status: editTournamentData.status
+        })
+        .eq('id', tournamentId)
+
+      if (error) throw error
+
+      await fetchData()
+      setEditingTournamentFull(null)
+      setEditSelectedFile(null)
+      setEditImagePreview('')
+      setStatus('success')
+      setMessage('Tournament updated successfully!')
+
+      setTimeout(() => {
+        setStatus('idle')
+        setMessage('')
+      }, 3000)
+    } catch (error) {
+      setStatus('error')
+      setMessage(error.message || 'Failed to update tournament')
+      console.error('Error updating tournament:', error)
+      setUploadingImage(false)
+    }
+  }
+
   // Login Screen
   if (loading) {
     return (
@@ -487,9 +603,9 @@ export default function AdminPage() {
           <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="font-display font-black text-5xl mb-2">
-                <span className="hover-glow">Admin Dashboard</span>
+                <span className="hover-glow">WELCOME GLAURIOS</span>
               </h1>
-              <p className="text-gray-400">Enter tournament results and manage leaderboard</p>
+              <p className="text-gray-400">Please enter tournament results and manage leaderboard</p>
             </div>
             <button
               onClick={handleLogout}
@@ -877,54 +993,171 @@ export default function AdminPage() {
 
           {/* Tournament Status Management */}
           <div className="glass rounded-2xl p-8 border border-neon-red/30">
-            <h2 className="font-display font-bold text-2xl mb-6">Manage Tournament Status</h2>
+            <h2 className="font-display font-bold text-2xl mb-6">Manage Tournaments</h2>
             
             {tournaments.length === 0 ? (
               <p className="text-gray-400 text-center py-8">No tournaments yet. Create one above!</p>
             ) : (
               <div className="space-y-4">
                 {tournaments.map((tournament) => (
-                  <div key={tournament.id} className="glass rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-display font-bold text-lg mb-1">{tournament.name}</h3>
-                        <div className="text-gray-400 text-sm">
-                          {tournament.mode} • {new Date(tournament.start_time).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                      <span className="text-gray-400 text-sm">Status:</span>
-                      {editingTournament === tournament.id ? (
-                        <>
-                          <select
-                            value={tournamentStatus}
-                            onChange={(e) => setTournamentStatus(e.target.value)}
-                            className="flex-1 px-3 py-2 bg-dark-card border border-neon-red rounded-lg focus:outline-none text-white"
-                          >
-                            <option value="upcoming">Upcoming</option>
-                            <option value="live">Live</option>
-                            <option value="completed">Completed</option>
-                          </select>
+                  <div key={tournament.id} className="glass rounded-lg p-6">
+                    {editingTournamentFull === tournament.id ? (
+                      /* Full Edit Mode */
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-display font-bold text-lg">Edit Tournament</h3>
                           <button
-                            onClick={() => handleSaveTournamentStatus(tournament.id)}
-                            className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors"
+                            onClick={() => {
+                              setEditingTournamentFull(null)
+                              setEditSelectedFile(null)
+                              setEditImagePreview('')
+                            }}
+                            className="text-gray-400 hover:text-white"
                           >
-                            <Save className="w-5 h-5" />
+                            <X className="w-6 h-6" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">Name</label>
+                            <input
+                              type="text"
+                              value={editTournamentData.name}
+                              onChange={(e) => setEditTournamentData({...editTournamentData, name: e.target.value})}
+                              className="w-full px-3 py-2 bg-dark-card border border-white/10 rounded-lg focus:outline-none focus:border-neon-blue text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">Mode</label>
+                            <input
+                              type="text"
+                              value={editTournamentData.mode}
+                              onChange={(e) => setEditTournamentData({...editTournamentData, mode: e.target.value})}
+                              className="w-full px-3 py-2 bg-dark-card border border-white/10 rounded-lg focus:outline-none focus:border-neon-blue text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">Start Time</label>
+                            <input
+                              type="datetime-local"
+                              value={editTournamentData.start_time}
+                              onChange={(e) => setEditTournamentData({...editTournamentData, start_time: e.target.value})}
+                              className="w-full px-3 py-2 bg-dark-card border border-white/10 rounded-lg focus:outline-none focus:border-neon-blue text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">Status</label>
+                            <select
+                              value={editTournamentData.status}
+                              onChange={(e) => setEditTournamentData({...editTournamentData, status: e.target.value})}
+                              className="w-full px-3 py-2 bg-dark-card border border-white/10 rounded-lg focus:outline-none focus:border-neon-blue text-white"
+                            >
+                              <option value="upcoming">Upcoming</option>
+                              <option value="live">Live</option>
+                              <option value="completed">Completed</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Image Upload */}
+                        <div>
+                          <label className="block text-sm text-gray-400 mb-2">Tournament Image</label>
+                          
+                          {!editImagePreview ? (
+                            <>
+                              <input
+                                type="file"
+                                id={`editImageUpload-${tournament.id}`}
+                                accept="image/*"
+                                onChange={handleEditFileSelect}
+                                className="hidden"
+                              />
+                              <label
+                                htmlFor={`editImageUpload-${tournament.id}`}
+                                className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-neon-blue/50 transition-colors"
+                              >
+                                <div className="text-center">
+                                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                  <p className="text-white text-sm">Click to upload new image</p>
+                                </div>
+                              </label>
+
+                              <div className="mt-2 text-center text-gray-500 text-sm">OR</div>
+                              
+                              <input
+                                type="url"
+                                value={editTournamentData.image_url}
+                                onChange={(e) => {
+                                  setEditTournamentData({...editTournamentData, image_url: e.target.value})
+                                  setEditImagePreview(e.target.value)
+                                }}
+                                placeholder="Paste image URL"
+                                className="mt-2 w-full px-3 py-2 bg-dark-card border border-white/10 rounded-lg focus:outline-none focus:border-neon-blue text-white text-sm"
+                              />
+                            </>
+                          ) : (
+                            <div className="relative group">
+                              <img
+                                src={editImagePreview}
+                                alt="Preview"
+                                className="w-full h-32 object-cover rounded-lg"
+                              />
+                              <button
+                                type="button"
+                                onClick={clearEditImage}
+                                className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex space-x-3">
+                          <button
+                            onClick={() => handleSaveTournamentFull(tournament.id)}
+                            disabled={uploadingImage || status === 'submitting'}
+                            className="flex-1 px-4 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-colors font-bold disabled:opacity-50"
+                          >
+                            {uploadingImage ? 'Uploading...' : status === 'submitting' ? 'Saving...' : 'Save Changes'}
                           </button>
                           <button
                             onClick={() => {
-                              setEditingTournament(null)
-                              setTournamentStatus('')
+                              setEditingTournamentFull(null)
+                              setEditSelectedFile(null)
+                              setEditImagePreview('')
                             }}
-                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors"
+                            className="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors"
                           >
-                            <X className="w-5 h-5" />
+                            Cancel
                           </button>
-                        </>
-                      ) : (
-                        <>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Display Mode */
+                      <>
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            {tournament.image_url && (
+                              <img 
+                                src={tournament.image_url}
+                                alt={tournament.name}
+                                className="w-full h-32 object-cover rounded-lg mb-3"
+                              />
+                            )}
+                            <h3 className="font-display font-bold text-lg mb-1">{tournament.name}</h3>
+                            <div className="text-gray-400 text-sm space-y-1">
+                              <div>📍 {tournament.mode}</div>
+                              <div>📅 {new Date(tournament.start_time).toLocaleString()}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 pt-4 border-t border-white/10">
                           <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
                             tournament.status === 'live' ? 'bg-red-500/20 text-red-500' :
                             tournament.status === 'upcoming' ? 'bg-blue-500/20 text-blue-500' :
@@ -933,15 +1166,17 @@ export default function AdminPage() {
                             {tournament.status === 'live' && '🔴 '}
                             {tournament.status}
                           </span>
+                          
                           <button
-                            onClick={() => handleEditTournamentStatus(tournament)}
-                            className="px-4 py-2 bg-neon-red/20 hover:bg-neon-red/30 rounded-lg transition-colors ml-auto"
+                            onClick={() => handleEditTournamentFull(tournament)}
+                            className="ml-auto px-4 py-2 bg-neon-blue/20 hover:bg-neon-blue/30 rounded-lg transition-colors flex items-center space-x-2"
                           >
-                            <Edit2 className="w-5 h-5 text-neon-red" />
+                            <Edit2 className="w-4 h-4" />
+                            <span>Edit Tournament</span>
                           </button>
-                        </>
-                      )}
-                    </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

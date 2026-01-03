@@ -183,10 +183,13 @@ export default function ContactPage() {
                   className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg font-display font-bold hover:scale-105 transition-transform"
                 >
                   <MessageCircle className="w-5 h-5 mr-2" />
-                  Join WhatsApp Group
+                  Join WhatsApp Group 
                 </a>
-              </div>
 
+               <p className="mt-7">Or Call +233554242524</p>
+
+              </div>
+               
               {/* Quick Info */}
               <div className="glass rounded-2xl p-8 border border-neon-purple/30">
                 <h3 className="font-display font-bold text-xl mb-4 text-neon-purple">Quick Info</h3>
