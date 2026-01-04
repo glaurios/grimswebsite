@@ -614,9 +614,9 @@ export default function AdminPage() {
           <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="font-display font-black text-5xl mb-2">
-                <span className="hover-glow">Admin Dashboard</span>
+                <span className="hover-glow">Welcome Glaurios</span>
               </h1>
-              <p className="text-gray-400">Enter tournament results and manage leaderboard</p>
+              <p className="text-gray-400">Please enter tournament information and manage leaderboard if you wish to.</p>
             </div>
             <button
               onClick={handleLogout}

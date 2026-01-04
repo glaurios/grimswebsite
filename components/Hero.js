@@ -18,7 +18,7 @@ export default function Hero() {
           <div className="relative w-32 h-32 rounded-2xl overflow-hidden shadow-2xl animate-glow-pulse">
             {/* Replace 'logo.png' with your actual logo filename */}
             <Image
-              src="/logo.png"
+              src="/official logo.jpeg"
               alt="GRIMS Logo"
               fill
               sizes="128px"

@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
-import { Calendar, Clock, Gamepad2, Trophy, CheckCircle, XCircle } from 'lucide-react'
+import { Calendar, Clock, Gamepad2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export default function TournamentsPage() {
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all') // all, live, upcoming, completed
+  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     fetchTournaments()
@@ -61,7 +61,7 @@ export default function TournamentsPage() {
     }
   }
 
-  const filteredTournaments = tournaments.filter(t => 
+  const filteredTournaments = tournaments.filter(t =>
     filter === 'all' ? true : t.status === filter
   )
 
@@ -105,16 +105,14 @@ export default function TournamentsPage() {
             </div>
           </div>
 
-          {/* Filter Buttons */}
+          {/* Filters */}
           <div className="flex flex-wrap gap-3 mb-8 justify-center">
             {['all', 'live', 'upcoming', 'completed'].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`px-6 py-2 rounded-lg font-medium capitalize transition-all ${
-                  filter === f
-                    ? 'bg-neon-blue text-black'
-                    : 'glass hover:bg-white/5'
+                  filter === f ? 'bg-neon-blue text-black' : 'glass hover:bg-white/5'
                 }`}
               >
                 {f}
@@ -134,17 +132,17 @@ export default function TournamentsPage() {
               {filteredTournaments.map((tournament) => {
                 const { date, time } = formatDateTime(tournament.start_time)
                 const endDateTime = tournament.end_time ? formatDateTime(tournament.end_time) : null
-                
+
                 return (
                   <div
                     key={tournament.id}
-                    className="glass rounded-xl overflow-hidden card-hover"
+                    className="glass rounded-xl overflow-hidden card-hover cursor-pointer transition-all duration-300"
                   >
-                    {/* Tournament Image */}
+                    {/* Image */}
                     {tournament.image_url ? (
                       <div className="relative h-80 overflow-hidden">
-                        <img 
-                          src={tournament.image_url} 
+                        <img
+                          src={tournament.image_url}
                           alt={tournament.name}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                         />
@@ -164,19 +162,16 @@ export default function TournamentsPage() {
 
                     {/* Header */}
                     <div className="bg-gradient-to-r from-neon-blue/10 to-neon-purple/10 p-6 border-b border-white/10">
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-display font-bold text-xl flex-1 pr-4">
-                          {tournament.name}
-                        </h3>
-                      </div>
-                      
-                      <div className="flex items-center text-gray-400 text-sm mt-3">
+                      <h3 className="font-display font-bold text-xl mb-2">
+                        {tournament.name}
+                      </h3>
+                      <div className="flex items-center text-gray-400 text-sm">
                         <Gamepad2 className="w-4 h-4 mr-2" />
                         {tournament.mode}
                       </div>
                     </div>
 
-                    {/* Details */}
+                    {/* Details summary */}
                     <div className="p-6 space-y-3">
                       <div>
                         <div className="text-gray-400 text-sm mb-2">Start Time</div>
@@ -190,49 +185,13 @@ export default function TournamentsPage() {
                         </div>
                       </div>
 
-                      {endDateTime && tournament.status === 'completed' && (
-                        <div className="pt-3 border-t border-white/10">
-                          <div className="text-gray-400 text-sm mb-1">Ended</div>
-                          <div className="text-white font-medium">{endDateTime.date} at {endDateTime.time}</div>
-                        </div>
-                      )}
-
-                      {/* Status-specific info */}
-                      {tournament.status === 'live' && (
-                        <div className="pt-3 border-t border-white/10">
-                          <div className="flex items-center text-neon-red">
-                            <div className="w-2 h-2 bg-neon-red rounded-full animate-pulse mr-2"></div>
-                            <span className="font-bold text-sm">LIVE NOW - JOIN THE BATTLE!</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {tournament.status === 'upcoming' && (
-                        <div className="pt-3 border-t border-white/10">
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-400 text-sm">Entry Fee</span>
-                            <span className="text-neon-blue font-bold">FREE</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {tournament.status === 'completed' && (
-                        <div className="pt-3 border-t border-white/10">
-                          <div className="flex items-center text-gray-400">
-                            {tournament.results_entered ? (
-                              <>
-                                <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                                <span className="text-sm">Results Recorded</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="w-5 h-5 text-yellow-500 mr-2" />
-                                <span className="text-sm">Awaiting Results</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      {/* View Details button */}
+                      <Link
+                        href={`/tournaments/${tournament.id}`}
+                        className="mt-4 inline-flex items-center justify-center w-full px-5 py-3 rounded-lg bg-neon-blue text-black font-bold tracking-wide hover:scale-[1.03] hover:shadow-neon-blue/40 transition-all duration-300"
+                      >
+                        View Full Details →
+                      </Link>
                     </div>
                   </div>
                 )
@@ -241,7 +200,9 @@ export default function TournamentsPage() {
           ) : (
             <div className="glass rounded-xl p-12 text-center">
               <Gamepad2 className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">No {filter !== 'all' ? filter : ''} tournaments found</p>
+              <p className="text-gray-400 text-lg">
+                No {filter !== 'all' ? filter : ''} tournaments found
+              </p>
             </div>
           )}
         </div>
