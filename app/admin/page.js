@@ -7,7 +7,6 @@ import Footer from '@/components/Footer'
 import { Trophy, Plus, Save, LogOut, AlertCircle, CheckCircle, Calendar, Image as ImageIcon, Upload, X, Edit2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
-
 export default function AdminPage() {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -26,6 +25,8 @@ export default function AdminPage() {
     mode: '',
     start_time: '',
     image_url: '',
+    description: '',
+    winner: '',
     status: 'upcoming'
   })
   
@@ -39,7 +40,7 @@ export default function AdminPage() {
   const [playerPoints, setPlayerPoints] = useState('')
   
   // Tournament editing state
- const [editingTournament, setEditingTournament] = useState(null);
+   const [editingTournament, setEditingTournament] = useState(null);
   const [tournamentStatus, setTournamentStatus] = useState('')
   
   // Tournament full edit state
@@ -49,6 +50,8 @@ export default function AdminPage() {
     mode: '',
     start_time: '',
     image_url: '',
+    description: '',
+    winner: '',
     status: 'upcoming'
   })
   const [editSelectedFile, setEditSelectedFile] = useState(null)
@@ -267,6 +270,8 @@ export default function AdminPage() {
           mode: newTournament.mode,
           start_time: new Date(newTournament.start_time).toISOString(),
           image_url: finalImageUrl || null,
+          description: newTournament.description || null,
+          winner: newTournament.winner || null,
           status: newTournament.status,
           results_entered: false
         }])
@@ -280,6 +285,8 @@ export default function AdminPage() {
         mode: '',
         start_time: '',
         image_url: '',
+        description: '',
+        winner: '',
         status: 'upcoming'
       })
       setSelectedFile(null)
@@ -417,6 +424,8 @@ export default function AdminPage() {
       mode: tournament.mode,
       start_time: new Date(tournament.start_time).toISOString().slice(0, 16),
       image_url: tournament.image_url || '',
+      description: tournament.description || '',
+      winner: tournament.winner || '',
       status: tournament.status
     })
     setEditImagePreview(tournament.image_url || '')
@@ -466,7 +475,7 @@ export default function AdminPage() {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
 
         const { error: uploadError, data } = await supabase.storage
-          .from('tournament images')
+          .from('tournament-images')
           .upload(fileName, editSelectedFile)
 
         if (uploadError) {
@@ -474,7 +483,7 @@ export default function AdminPage() {
         }
 
         const { data: { publicUrl } } = supabase.storage
-          .from('tournament images')
+          .from('tournament-images')
           .getPublicUrl(fileName)
 
         finalImageUrl = publicUrl
@@ -488,6 +497,8 @@ export default function AdminPage() {
           mode: editTournamentData.mode,
           start_time: new Date(editTournamentData.start_time).toISOString(),
           image_url: finalImageUrl || null,
+          description: editTournamentData.description || null,
+          winner: editTournamentData.winner || null,
           status: editTournamentData.status
         })
         .eq('id', tournamentId)
@@ -603,9 +614,9 @@ export default function AdminPage() {
           <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="font-display font-black text-5xl mb-2">
-                <span className="hover-glow">WELCOME GLAURIOS</span>
+                <span className="hover-glow">Admin Dashboard</span>
               </h1>
-              <p className="text-gray-400">Please enter tournament results and manage leaderboard</p>
+              <p className="text-gray-400">Enter tournament results and manage leaderboard</p>
             </div>
             <button
               onClick={handleLogout}
@@ -796,6 +807,34 @@ export default function AdminPage() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Description Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Tournament Description (Optional)
+                  </label>
+                  <textarea
+                    value={newTournament.description}
+                    onChange={(e) => setNewTournament({...newTournament, description: e.target.value})}
+                    rows="4"
+                    className="w-full px-4 py-3 bg-dark-card border border-white/10 rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-white resize-none"
+                    placeholder="Enter tournament details, rules, prize information, etc."
+                  />
+                </div>
+
+                {/* Winner Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Winner (Optional - for completed tournaments)
+                  </label>
+                  <input
+                    type="text"
+                    value={newTournament.winner}
+                    onChange={(e) => setNewTournament({...newTournament, winner: e.target.value})}
+                    className="w-full px-4 py-3 bg-dark-card border border-white/10 rounded-lg focus:outline-none focus:border-neon-blue transition-colors text-white"
+                    placeholder="e.g., AP*Gilgal"
+                  />
                 </div>
 
                 <button

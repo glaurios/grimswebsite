@@ -18,11 +18,12 @@ export default function Hero() {
           <div className="relative w-32 h-32 rounded-2xl overflow-hidden shadow-2xl animate-glow-pulse">
             {/* Replace 'logo.png' with your actual logo filename */}
             <Image
-              src="/official logo.jpeg"
+              src="/logo.png"
               alt="GRIMS Logo"
               fill
-              className="object-cover"
+              sizes="128px"
               priority
+              className="object-cover"
               onError={(e) => {
                 // Fallback to placeholder if logo doesn't exist
                 e.target.style.display = 'none'
