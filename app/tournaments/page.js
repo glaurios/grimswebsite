@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import Link from 'next/link'
 import { Calendar, Clock, Gamepad2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 
 export default function TournamentsPage() {
+  const router = useRouter()
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const [navigatingTo, setNavigatingTo] = useState(null) // id we're navigating to
 
   useEffect(() => {
     fetchTournaments()
@@ -30,6 +33,16 @@ export default function TournamentsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleViewDetails = (e, id) => {
+    e.preventDefault()
+    // start exit animation
+    setNavigatingTo(id)
+    // navigate after animation duration (matches motion transition below)
+    setTimeout(() => {
+      router.push(`/tournaments/${id}`)
+    }, 350) // 350ms matches the transition duration
   }
 
   const getStatusBadge = (status) => {
@@ -75,7 +88,13 @@ export default function TournamentsPage() {
   return (
     <>
       <Navbar />
-      <main className="pt-32 pb-20 min-h-screen">
+      {/* page wrapper animates out when navigatingTo is set */}
+      <motion.main
+        initial={{ opacity: 1, y: 0 }}
+        animate={navigatingTo ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="pt-32 pb-20 min-h-screen"
+      >
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-12">
@@ -134,8 +153,9 @@ export default function TournamentsPage() {
                 const endDateTime = tournament.end_time ? formatDateTime(tournament.end_time) : null
 
                 return (
-                  <div
+                  <motion.div
                     key={tournament.id}
+                    whileHover={{ scale: 1.02 }}
                     className="glass rounded-xl overflow-hidden card-hover cursor-pointer transition-all duration-300"
                   >
                     {/* Image */}
@@ -185,15 +205,15 @@ export default function TournamentsPage() {
                         </div>
                       </div>
 
-                      {/* View Details button */}
-                      <Link
-                        href={`/tournaments/${tournament.id}`}
+                      {/* View Details button — triggers smooth exit animation then navigates */}
+                      <button
+                        onClick={(e) => handleViewDetails(e, tournament.id)}
                         className="mt-4 inline-flex items-center justify-center w-full px-5 py-3 rounded-lg bg-neon-blue text-black font-bold tracking-wide hover:scale-[1.03] hover:shadow-neon-blue/40 transition-all duration-300"
                       >
                         View Full Details →
-                      </Link>
+                      </button>
                     </div>
-                  </div>
+                  </motion.div>
                 )
               })}
             </div>
@@ -206,7 +226,7 @@ export default function TournamentsPage() {
             </div>
           )}
         </div>
-      </main>
+      </motion.main>
       <Footer />
     </>
   )

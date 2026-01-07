@@ -99,6 +99,42 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Enhanced glass card for forms */
+.glass-card {
+  background: rgba(13, 17, 28, 0.4);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+}
+
+/* Animations for forms */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
+
 /* Grid background */
 .grid-bg {
   background-image: 
