@@ -83,7 +83,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center space-x-3 group">
             {!logoError ? (
               <Image
-                src="/logo.png"
+                src="/official logo.jpeg"
                 alt="GRIMS"
                 width={50}
                 height={50}

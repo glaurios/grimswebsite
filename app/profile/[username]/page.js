@@ -212,7 +212,7 @@ export default function ProfilePage() {
             <div className="glass rounded-xl p-6 border border-neon-blue/20 text-center">
               <Trophy className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
               <div className="text-4xl font-display font-bold mb-1">
-                {leaderboardData ? `#${leaderboardData.rank}` : 'N/A'}
+                {stats?.leaderboard_rank ? `#${stats.leaderboard_rank}` : 'N/A'}
               </div>
               <div className="text-gray-400 text-sm">Leaderboard Rank</div>
             </div>
@@ -221,7 +221,7 @@ export default function ProfilePage() {
             <div className="glass rounded-xl p-6 border border-neon-purple/20 text-center">
               <Award className="w-8 h-8 text-neon-purple mx-auto mb-3" />
               <div className="text-4xl font-display font-bold mb-1">
-                {leaderboardData?.total_points || 0}
+                {stats?.total_points || 0}
               </div>
               <div className="text-gray-400 text-sm">Total Points</div>
             </div>

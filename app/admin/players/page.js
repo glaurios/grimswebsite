@@ -25,6 +25,8 @@ export default function AdminPlayersPage() {
     favorite_mode: '',
     bio: '',
     // Stats
+    leaderboard_rank: '',
+    total_points: '',
     total_tournaments: '',
     total_wins: '',
     best_rank: '',
@@ -100,6 +102,8 @@ export default function AdminPlayersPage() {
       main_weapon: player.main_weapon || '',
       favorite_mode: player.favorite_mode || '',
       bio: player.bio || '',
+      leaderboard_rank: player.stats?.leaderboard_rank?.toString() || '',
+      total_points: player.stats?.total_points?.toString() || '0',
       total_tournaments: player.stats?.total_tournaments?.toString() || '0',
       total_wins: player.stats?.total_wins?.toString() || '0',
       best_rank: player.stats?.best_rank?.toString() || '',
@@ -117,6 +121,8 @@ export default function AdminPlayersPage() {
       main_weapon: '',
       favorite_mode: '',
       bio: '',
+      leaderboard_rank: '',
+      total_points: '',
       total_tournaments: '',
       total_wins: '',
       best_rank: '',
@@ -156,18 +162,14 @@ export default function AdminPlayersPage() {
       if (profileError) throw profileError
 
       // Update or create stats using upsert
-      const totalTournaments = parseInt(editForm.total_tournaments) || 0
-      const totalWins = parseInt(editForm.total_wins) || 0
-      const winRate = totalTournaments > 0 
-        ? parseFloat(((totalWins / totalTournaments) * 100).toFixed(2))
-        : parseFloat(editForm.win_rate) || 0
-
       const statsData = {
         profile_id: player.id,
-        total_tournaments: totalTournaments,
-        total_wins: totalWins,
+        leaderboard_rank: editForm.leaderboard_rank ? parseInt(editForm.leaderboard_rank) : null,
+        total_points: parseFloat(editForm.total_points) || 0,
+        total_tournaments: parseInt(editForm.total_tournaments) || 0,
+        total_wins: parseInt(editForm.total_wins) || 0,
         best_rank: editForm.best_rank ? parseInt(editForm.best_rank) : null,
-        win_rate: winRate,
+        win_rate: parseFloat(editForm.win_rate) || 0,
         avg_points_per_tournament: parseFloat(editForm.avg_points_per_tournament) || 0
       }
 
@@ -392,6 +394,33 @@ export default function AdminPlayersPage() {
                           </h4>
 
                           <div>
+                            <label className="block text-sm text-gray-400 mb-2">Leaderboard Rank</label>
+                            <input
+                              type="number"
+                              name="leaderboard_rank"
+                              value={editForm.leaderboard_rank}
+                              onChange={handleChange}
+                              min="1"
+                              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-yellow-400 text-white"
+                              placeholder="e.g., 1, 2, 3, etc."
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">Total Points</label>
+                            <input
+                              type="number"
+                              name="total_points"
+                              value={editForm.total_points}
+                              onChange={handleChange}
+                              min="0"
+                              step="0.01"
+                              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-neon-purple text-white"
+                              placeholder="Total leaderboard points"
+                            />
+                          </div>
+
+                          <div>
                             <label className="block text-sm text-gray-400 mb-2">Total Tournaments</label>
                             <input
                               type="number"
@@ -429,7 +458,7 @@ export default function AdminPlayersPage() {
                           </div>
 
                           <div>
-                            <label className="block text-sm text-gray-400 mb-2">Win Rate (%)</label>
+                            <label className="block text-sm text-gray-400 mb-2">Win Rate (%) - Manual Entry</label>
                             <input
                               type="number"
                               name="win_rate"
@@ -439,7 +468,7 @@ export default function AdminPlayersPage() {
                               max="100"
                               step="0.01"
                               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-green-400 text-white"
-                              placeholder="Will auto-calculate from wins/tournaments"
+                              placeholder="Enter win rate manually (e.g., 75.5)"
                             />
                           </div>
 
