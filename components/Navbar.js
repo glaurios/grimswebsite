@@ -83,7 +83,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center space-x-3 group">
             {!logoError ? (
               <Image
-                src="/official logo.jpeg"
+                src="/logo.png"
                 alt="GRIMS"
                 width={50}
                 height={50}
@@ -112,6 +112,10 @@ export default function Navbar() {
             <Link href="/players" className="nav-link flex items-center space-x-2">
               <Users className="w-4 h-4" />
               <span>Players</span>
+            </Link>
+            <Link href="/registered-players" className="nav-link flex items-center space-x-2">
+              <Users className="w-4 h-4" />
+              <span>Community</span>
             </Link>
             <Link href="/about" className="nav-link flex items-center space-x-2">
               <Info className="w-4 h-4" />
@@ -230,6 +234,17 @@ export default function Navbar() {
               <div className="flex items-center space-x-3">
                 <Users className="w-5 h-5" />
                 <span>Players</span>
+              </div>
+            </Link>
+            
+            <Link 
+              href="/registered-players" 
+              className="block px-4 py-3 hover:bg-white/10 rounded-lg transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              <div className="flex items-center space-x-3">
+                <Users className="w-5 h-5" />
+                <span>Community</span>
               </div>
             </Link>
             

@@ -24,6 +24,7 @@ export default function EditProfilePage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
   const [formData, setFormData] = useState({
+    inGameName: '',
     gameLevel: '',
     clan: '',
     mainWeapon: '',
@@ -55,11 +56,20 @@ export default function EditProfilePage() {
         .eq('in_game_name', parsedUser.username)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Profile fetch error:', error)
+        setMessage({ 
+          type: 'error', 
+          text: `Could not load profile for "${parsedUser.username}". Please try refreshing the page.` 
+        })
+        setLoading(false)
+        return
+      }
 
       if (profile) {
         setCurrentProfile(profile)
         setFormData({
+          inGameName: profile.in_game_name || '',
           gameLevel: profile.game_level?.toString() || '',
           clan: profile.clan || '',
           mainWeapon: profile.main_weapon || '',
@@ -70,10 +80,18 @@ export default function EditProfilePage() {
           confirmPassword: ''
         })
         setAvatarPreview(profile.avatar_url || '')
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: `Profile not found for "${parsedUser.username}". Please contact support.` 
+        })
       }
     } catch (error) {
       console.error('Auth check error:', error)
-      router.push('/login')
+      setMessage({ 
+        type: 'error', 
+        text: `Error loading profile: ${error.message}. Please try again.` 
+      })
     } finally {
       setLoading(false)
     }
@@ -149,6 +167,31 @@ export default function EditProfilePage() {
         throw new Error('Game level must be between 1 and 400')
       }
 
+      // Validate username
+      const newUsername = formData.inGameName.trim()
+      if (!newUsername) {
+        throw new Error('Username cannot be empty')
+      }
+      if (newUsername.length < 3) {
+        throw new Error('Username must be at least 3 characters')
+      }
+      if (newUsername.length > 30) {
+        throw new Error('Username must be less than 30 characters')
+      }
+
+      // Check if username changed and is unique
+      if (newUsername !== currentProfile.in_game_name) {
+        const { data: existingUser } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('in_game_name', newUsername)
+          .single()
+
+        if (existingUser) {
+          throw new Error('Username already taken. Please choose another.')
+        }
+      }
+
       // Handle password change if requested
       if (formData.newPassword) {
         if (!formData.currentPassword) {
@@ -205,7 +248,7 @@ export default function EditProfilePage() {
         // Upload new avatar
         const timestamp = Date.now()
         const fileExt = selectedAvatar.name.split('.').pop()
-        const fileName = `${currentUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}-${timestamp}.${fileExt}`
+        const fileName = `${newUsername.toLowerCase().replace(/[^a-z0-9]/g, '')}-${timestamp}.${fileExt}`
 
         const { error: uploadError } = await supabase.storage
           .from('player-avatars')
@@ -224,6 +267,7 @@ export default function EditProfilePage() {
       const { error: updateError } = await supabase
         .from('user_profiles')
         .update({
+          in_game_name: newUsername,
           game_level: level,
           clan: formData.clan.trim() || null,
           main_weapon: formData.mainWeapon.trim() || null,
@@ -235,14 +279,23 @@ export default function EditProfilePage() {
 
       if (updateError) throw updateError
 
+      // Update localStorage if username changed
+      if (newUsername !== currentProfile.in_game_name) {
+        const updatedUser = {
+          ...currentUser,
+          username: newUsername
+        }
+        localStorage.setItem('grims_user', JSON.stringify(updatedUser))
+      }
+
       setMessage({ 
         type: 'success', 
         text: 'Profile updated successfully!' 
       })
 
-      // Refresh profile data
+      // Refresh profile data and redirect to new profile URL
       setTimeout(() => {
-        router.push(`/profile/${currentUser.username}`)
+        router.push(`/profile/${newUsername}`)
       }, 1500)
 
     } catch (error) {
@@ -378,6 +431,30 @@ export default function EditProfilePage() {
                     Game Information
                   </h3>
                   
+                  {/* Username Field */}
+                  <div className="relative group">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Username (IGN) *
+                    </label>
+                    <div className="absolute inset-y-0 top-8 left-4 flex items-center pointer-events-none">
+                      <User className="w-5 h-5 text-gray-400 group-focus-within:text-neon-blue transition-colors" />
+                    </div>
+                    <input
+                      type="text"
+                      name="inGameName"
+                      value={formData.inGameName}
+                      onChange={handleChange}
+                      required
+                      minLength={3}
+                      maxLength={30}
+                      className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-neon-blue focus:bg-white/10 transition-all text-white placeholder-gray-500 backdrop-blur-sm"
+                      placeholder="Enter your in-game name"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Your unique in-game name (3-30 characters)
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="relative group">
                       <label className="block text-sm font-medium text-gray-300 mb-2">

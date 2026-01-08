@@ -10,7 +10,7 @@ import { Trophy, Users, Target, Gamepad2, Calendar, Edit, Crown, Medal, Award } 
 
 export default function ProfilePage() {
   const params = useParams()
-  const username = params?.username
+  const username = params?.username ? decodeURIComponent(params.username) : null
   const [profile, setProfile] = useState(null)
   const [stats, setStats] = useState(null)
   const [leaderboardData, setLeaderboardData] = useState(null)
